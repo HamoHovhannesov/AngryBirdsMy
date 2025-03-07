@@ -5,6 +5,11 @@ TagManager:
   serializedVersion: 2
   tags:
   - Ground
+  - cub
+  - FxTemporaire
+  - Cube
+  - Enemy
+  - Bullet
   layers:
   - Default
   - TransparentFX

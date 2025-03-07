@@ -1,102 +1,86 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class ShootingProcess : MonoBehaviour
 {
-
+    ObjectFollow objectFollow;
     [SerializeField] GameObject Bullet;
     GameObject BulletInstance = null;
+    [SerializeField] Trajectory trajectory;
     [SerializeField] Transform ShootingPoint;
     [SerializeField] float Maxforce;
     [SerializeField] float Minforce;
-    [SerializeField] float inkremet;
-    [SerializeField] LayerMask mask;
+    [SerializeField] float Increment;
+    [SerializeField] Image Charge;
+    [SerializeField] int Counter = 3;
+    [SerializeField] float ScreenToWorldPointOffset; 
+    Camera mainCamera;
     float force;
     float minXRotation = 250f;
 
-    Camera mainCamer;
-    Ray ray;
-    RaycastHit hit;
-
+    float x;
     
+
     private void Start()
     {
+        objectFollow = FindObjectOfType<ObjectFollow>();
+        mainCamera = Camera.main;
         force = 0;
+        GameManager.bulletsLeft = Counter;
     }
     private void Update()
     {
-        if (BulletInstance == null)
+        if (BulletInstance == null && Counter > 0 && GameManager.GameEnded == false)
         {
             BulletLaunch();
+            CannonRatate();
         }
-
-        CannonRatate();
+        Charge.fillAmount = force/Maxforce*5;
     }
-    
+
     void BulletInstantiate()
     {
-        Debug.Log("mta");
-        force = Mathf.Clamp(force, Minforce, Maxforce);
+        Counter--;
+        BulletInstance = Instantiate(Bullet, ShootingPoint.position, transform.rotation);
 
-        BulletInstance = Instantiate(Bullet, ShootingPoint.position,Quaternion.identity);
+        objectFollow.GetTarget(BulletInstance.transform);
+        BulletInstance.GetComponent<Bullet>().Shoot(force,Counter);
+        force = 0;
+        Charge.fillAmount = 0f;
 
-        CameraController.GetBullet(BulletInstance.transform);
-        BulletInstance.GetComponent<Bullet>().Shoot(force,transform.up);
     }
 
-    void BulletLaunch()
+    public void BulletLaunch()
     {
         if (Input.GetMouseButtonDown(0))
         {
-            force = 0;
+            trajectory.Show();
         }
         if (Input.GetMouseButton(0))
         {
-            force += Time.deltaTime * inkremet;
-
+            force += Time.deltaTime * Increment;
+            force = Mathf.Clamp(force, Minforce, Maxforce);
+            if(force < Maxforce / 2)
+            {
+             trajectory.UpdateTrajectory(ShootingPoint.position, ShootingPoint.forward * force);
+            }
+           
         }
         if (Input.GetMouseButtonUp(0))
         {
+            trajectory.Hide();
             BulletInstantiate();
-
         }
-
 
     }
     void CannonRatate()
     {
-
-        //Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        //float zRotation = -Quaternion.LookRotation(pos - transform.position, Vector3.up).eulerAngles.z;
-        //float yRotation = -Quaternion.LookRotation(pos = transform.position, Vector3.up).eulerAngles.y;
-        //transform.rotation = Quaternion.Euler(0, yRotation, zRotation);
-       
-        ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out hit, Mathf.Infinity, mask))
-        {
-            Debug.Log("aasassas");
-            Vector3 point = hit.point;
-            Debug.Log(hit.point);
-
-            var xrotation =  Quaternion.LookRotation(point - transform.position, Vector3.forward).eulerAngles.x;
-            //xrotation = Mathf.Min(xrotation-100, minXRotation);
-            //point.z = transform.position.z;
-            var yrotation = Quaternion.LookRotation(point - transform.position,Vector3.forward).eulerAngles.y;
-            var zrotation = Quaternion.LookRotation(point - transform.position,Vector3.forward).eulerAngles.z;
-            Debug.Log(xrotation);
-            if (xrotation >= 365)
-            {
-                xrotation = 365;
-            }
-            transform.rotation = Quaternion.Euler(xrotation-100, yrotation,zrotation-90);
-        }
-
-
+        transform.LookAt(mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, ScreenToWorldPointOffset)));
     }
-
-
 }
 
 

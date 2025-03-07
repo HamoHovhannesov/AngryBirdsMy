@@ -5,37 +5,26 @@ using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-    bool TheBulletOnTheGround = false;
-    [SerializeField] float DestroyTime = 3000f;
+    [SerializeField] float DestroyTime = 5f;
     Rigidbody rb ;
-   
-    void Start()
-    {
-        
-    }
+
+    int BulletsLeft;
     
     void Update()
     {
-        if (TheBulletOnTheGround)
-        {
-
-            Destroy(gameObject, DestroyTime);
-        }
-
+            DestroyTime -= Time.deltaTime;
+            if(DestroyTime <= 0)
+            {
+                GameManager.manager.UpdateBulletCount(BulletsLeft);
+                Destroy(gameObject);
+            }
     }
 
-    public void Shoot(float force, Vector3 offset)
+    public void Shoot(float force,int bulletsLeft)
     {
+        BulletsLeft = bulletsLeft;
         rb = GetComponent<Rigidbody>();
-        Debug.Log(force);
-        rb.AddForce(offset*force, ForceMode.Impulse);
+        rb.AddForce(transform.forward * force, ForceMode.Impulse);
     }
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.tag == "Ground")
-        {
-            TheBulletOnTheGround = true;
-
-        }
-    }
+    
 }
